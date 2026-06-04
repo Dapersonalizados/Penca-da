@@ -3,10 +3,7 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <meta name="theme-color" content="#1A202C" />
-  <meta name="description" content="Penca Mundial Da! Personalizados" />
   <title>Penca Mundial · Da! Personalizados</title>
-  <link rel="preconnect" href="https://fonts.googleapis.com">
   <link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@400;600;700;900&family=Inter:wght@400;600&display=swap" rel="stylesheet">
   <style>
     * { margin: 0; padding: 0; box-sizing: border-box; }
@@ -20,7 +17,7 @@
   <script src="https://unpkg.com/react@18/umd/react.development.js"></script>
   <script src="https://unpkg.com/react-dom@18/umd/react-dom.development.js"></script>
   <script src="https://unpkg.com/@babel/standalone@7.23.10/babel.min.js"></script>
-  <script type="text/babel" data-type="module">
+  <script type="text/babel">
     const { useState } = React;
 
 
@@ -746,7 +743,7 @@ function Admin({resultados,campeonReal,onUpdate,onCampeon}){
 }
 
 // ── APP ────────────────────────────────────────────────────────────────────────
-export default function PencaMundialDa(){
+function PencaApp(){
   const [usuario,setUsuario]=useState(null);
   const [empresa,setEmpresa]=useState("");
   const [tab,setTab]=useState("predicciones");
@@ -897,9 +894,7 @@ export default function PencaMundialDa(){
 }
 
 
-    const domNode = document.getElementById('root');
-    const root = ReactDOM.createRoot(domNode);
-    root.render(<PencaApp />);
+    ReactDOM.createRoot(document.getElementById("root")).render(<PencaApp />);
   </script>
 </body>
 </html>
