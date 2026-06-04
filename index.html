@@ -13,7 +13,6 @@
     body { background: #1A202C; }
     input::-webkit-inner-spin-button, input::-webkit-outer-spin-button { -webkit-appearance: none; }
     input[type=number] { -moz-appearance: textfield; }
-    input:focus, select:focus { outline: none; }
   </style>
 </head>
 <body>
@@ -21,7 +20,7 @@
   <script src="https://unpkg.com/react@18/umd/react.development.js"></script>
   <script src="https://unpkg.com/react-dom@18/umd/react-dom.development.js"></script>
   <script src="https://unpkg.com/@babel/standalone@7.23.10/babel.min.js"></script>
-  <script type="text/babel" data-presets="react">
+  <script type="text/babel" data-type="module">
     const { useState } = React;
 
 
@@ -770,7 +769,6 @@ export default function PencaMundialDa(){
   };
 
   const css=`
-    @import url('https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@400;600;700&family=Inter:wght@400;600&display=swap');
     *{margin:0;padding:0;box-sizing:border-box;}
     body{background:${DA_BG};}
     input::-webkit-inner-spin-button,input::-webkit-outer-spin-button{-webkit-appearance:none;}
@@ -901,7 +899,7 @@ export default function PencaMundialDa(){
 
     const domNode = document.getElementById('root');
     const root = ReactDOM.createRoot(domNode);
-    root.render(React.createElement(PencaApp));
+    root.render(<PencaApp />);
   </script>
 </body>
 </html>
