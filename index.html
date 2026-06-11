@@ -18,7 +18,7 @@
   <script src="https://unpkg.com/react-dom@18/umd/react-dom.development.js"></script>
   <script src="https://unpkg.com/@babel/standalone@7.23.10/babel.min.js"></script>
   <script type="text/babel">
-    const { useState } = React;
+    const { useState, useEffect } = React;
 
 
 const DA_YELLOW = "#F5A623";
@@ -263,6 +263,37 @@ function calcTotal(usuario, resultados, campeonReal) {
   return { total, exactos, resultadosOk };
 }
 
+// ── FIREBASE CONFIG ───────────────────────────────────────────────────────────
+const FB_URL = "https://penca-da-default-rtdb.firebaseio.com";
+
+async function fbSet(path, data) {
+  try {
+    await fetch(`${FB_URL}/${path}.json`, {
+      method: "PUT",
+      body: JSON.stringify(data),
+      headers: {"Content-Type": "application/json"}
+    });
+  } catch(e) { console.error("fbSet error", e); }
+}
+
+async function fbGet(path) {
+  try {
+    const r = await fetch(`${FB_URL}/${path}.json`);
+    return await r.json();
+  } catch(e) { return null; }
+}
+
+async function fbUpdate(path, data) {
+  try {
+    await fetch(`${FB_URL}/${path}.json`, {
+      method: "PATCH",
+      body: JSON.stringify(data),
+      headers: {"Content-Type": "application/json"}
+    });
+  } catch(e) { console.error("fbUpdate error", e); }
+}
+
+// localStorage fallback
 function save(k,v){try{localStorage.setItem(k,JSON.stringify(v))}catch{}}
 function load(k,d){try{const v=localStorage.getItem(k);return v?JSON.parse(v):d}catch{return d}}
 
@@ -408,9 +439,12 @@ function Predicciones({usuario,empresa,resultados,campeonReal,onSave}){
 
   const set=(id,side,val)=>setPreds(p=>({...p,[id]:{...p[id],[side]:val}}));
 
-  const guardar=()=>{
+  const guardar=async()=>{
     save(key,preds);
     save(`da_campeon_${usuario}`,campeon);
+    const fbKey=usuario.replace(/[.#$\[\]]/g,"_");
+    await fbUpdate(`predicciones/${fbKey}`, preds);
+    await fbSet(`campeones/${fbKey}`, campeon);
     onSave();
     setSaved(true); setTimeout(()=>setSaved(false),2500);
   };
@@ -925,9 +959,10 @@ function AdminFases({fasesEquipos, onUpdate}){
 
   const setEq=(id,side,val)=>setLocal(p=>({...p,[id]:{...p[id],[side]:val}}));
 
-  const guardar=()=>{
+  const guardar=async()=>{
     onUpdate(local);
     save("da_fases_equipos", local);
+    await fbSet("fases_equipos", local);
     alert("✅ Cruces guardados");
   };
 
@@ -1003,11 +1038,18 @@ function Admin({resultados,campeonReal,onUpdate,onCampeon}){
   const [campeonInput,setCampeonInput]=useState(campeonReal||"");
   const setScore=(id,side,val)=>setLocal(p=>({...p,[id]:{...p[id],[side]:val}}));
 
-  const guardar=()=>{
+  const guardar=async()=>{
     const merged={...resultados,...local};
-    onUpdate(merged); save("da_resultados",merged);
-    if(campeonInput){onCampeon(campeonInput);save("da_campeon_real",campeonInput);}
-    setLocal({}); alert("✅ Guardado");
+    onUpdate(merged);
+    save("da_resultados",merged);
+    await fbSet("resultados", merged);
+    if(campeonInput){
+      onCampeon(campeonInput);
+      save("da_campeon_real",campeonInput);
+      await fbSet("campeon_real", campeonInput);
+    }
+    setLocal({});
+    alert("✅ Guardado");
   };
 
   return(
@@ -1097,6 +1139,28 @@ function PencaApp(){
   const [adminPass,setAdminPass]=useState("");
   const [adminOk,setAdminOk]=useState(false);
   const [tabKey,setTabKey]=useState(0);
+
+  // Load shared data from Firebase on mount
+  useEffect(()=>{
+    (async()=>{
+      // Load usuarios from Firebase
+      const fbUsuarios = await fbGet("usuarios");
+      if(fbUsuarios){
+        const lista = Object.values(fbUsuarios);
+        setUsuarios(lista);
+        save("da_usuarios", lista);
+      }
+      // Load resultados
+      const fbResultados = await fbGet("resultados");
+      if(fbResultados){ setResultados(fbResultados); save("da_resultados",fbResultados); }
+      // Load campeon
+      const fbCampeon = await fbGet("campeon_real");
+      if(fbCampeon){ setCampeonReal(fbCampeon); save("da_campeon_real",fbCampeon); }
+      // Load fases
+      const fbFases = await fbGet("fases_equipos");
+      if(fbFases){ setFasesEquipos(fbFases); save("da_fases_equipos",fbFases); }
+    })();
+  }, []);
 
   const handleLogin=(n,e)=>{
     setUsuario(n); setEmpresa(e);
