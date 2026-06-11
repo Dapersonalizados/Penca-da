@@ -332,16 +332,19 @@ function Login({onLogin}){
   const [err,setErr]=useState("");
 
   // usuarios now stored as [{nombre,empresa}] objects
-  const entrar=(u)=>{
+  const entrar=async(u)=>{
     if(u){ onLogin(u.nombre, u.empresa); return; }
     const n=nombre.trim(), e=empresa.trim();
     if(!n){setErr("Ingresá tu nombre"); return;}
     if(!e){setErr("Ingresá tu empresa"); return;}
-    const key=`${n}||${e}`;
+    const key=(n+"__"+e).replace(/[.#$\[\]/]/g,"_");
     const exists = usuarios.find(x=>x.key===key);
     if(!exists){
       const nuevo={key,nombre:n,empresa:e};
-      const u2=[...usuarios,nuevo]; setUsuarios(u2); save("da_usuarios",u2);
+      const u2=[...usuarios,nuevo];
+      setUsuarios(u2);
+      save("da_usuarios",u2);
+      await fbSet(`usuarios/${key}`, {nombre:n,empresa:e});
     }
     onLogin(n,e);
   };
