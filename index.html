@@ -328,7 +328,7 @@ function NumInput({value,onChange,disabled}){
 function Login({onLogin}){
   const [nombre,setNombre]=useState("");
   const [empresa,setEmpresa]=useState("");
-  const [usuarios,setUsuarios]=useState(()=>load("da_usuarios",[]));
+  const [usuarios,setUsuarios]=useState([]);
   const [err,setErr]=useState("");
 
   // usuarios now stored as [{nombre,empresa}] objects
@@ -1134,10 +1134,10 @@ function PencaApp(){
   const [usuario,setUsuario]=useState(null);
   const [empresa,setEmpresa]=useState("");
   const [tab,setTab]=useState("predicciones");
-  const [resultados,setResultados]=useState(()=>load("da_resultados",{}));
-  const [campeonReal,setCampeonReal]=useState(()=>load("da_campeon_real",""));
-  const [fasesEquipos,setFasesEquipos]=useState(()=>load("da_fases_equipos",{}));
-  const [usuarios,setUsuarios]=useState(()=>load("da_usuarios",[]));
+  const [resultados,setResultados]=useState({});
+  const [campeonReal,setCampeonReal]=useState("");
+  const [fasesEquipos,setFasesEquipos]=useState({});
+  const [usuarios,setUsuarios]=useState([]);
   const [showAdmin,setShowAdmin]=useState(false);
   const [adminPass,setAdminPass]=useState("");
   const [adminOk,setAdminOk]=useState(false);
@@ -1151,7 +1151,8 @@ function PencaApp(){
       if(fbUsuarios){
         const lista = Object.values(fbUsuarios);
         setUsuarios(lista);
-        save("da_usuarios", lista);
+      } else {
+        setUsuarios([]);
       }
       // Load resultados
       const fbResultados = await fbGet("resultados");
