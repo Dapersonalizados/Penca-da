@@ -445,7 +445,7 @@ function Predicciones({usuario,empresa,resultados,campeonReal,onSave}){
   const guardar=async()=>{
     save(key,preds);
     save(`da_campeon_${usuario}`,campeon);
-    const fbKey=usuario.replace(/[.#$\[\]]/g,"_");
+    const fbKey=(usuario+"__"+empresa).replace(/[.#$\[\]/]/g,"_");
     await fbUpdate(`predicciones/${fbKey}`, preds);
     await fbSet(`campeones/${fbKey}`, campeon);
     onSave();
@@ -589,17 +589,27 @@ function Predicciones({usuario,empresa,resultados,campeonReal,onSave}){
 }
 
 // ── TABLA ──────────────────────────────────────────────────────────────────────
-function Tabla({usuarios,resultados,campeonReal}){
-  const rows=usuarios.map(u=>{
-    const {total,exactos,resultadosOk}=calcTotal(u.nombre,resultados,campeonReal);
-    const predCampeon=load(`da_campeon_${u.nombre}`,"");
-    const acertoCampeon=campeonReal&&predCampeon===campeonReal;
-    return{...u,total,exactos,resultadosOk,predCampeon,acertoCampeon};
-  }).sort((a,b)=>b.total-a.total);
+function Tabla({resultados,campeonReal}){
+  const [usuarios,setUsuarios]=useState([]);
+  const [fbPreds,setFbPreds]=useState({});
+  const [fbCampeones,setFbCampeones]=useState({});
+  const [loading,setLoading]=useState(true);
+
+  useEffect(()=>{
+    (async()=>{
+      setLoading(true);
+      const u=await fbGet("usuarios");
+      const p=await fbGet("predicciones");
+      const c=await fbGet("campeones");
+      if(u) setUsuarios(Object.values(u));
+      if(p) setFbPreds(p);
+      if(c) setFbCampeones(c);
+      setLoading(false);
+    })();
+  },[]);
 
   const medals=["🥇","🥈","🥉"];
 
-  // WhatsApp: invitar a la penca
   const recomendarTabla=()=>{
     const msg=`⚽ ¡Te invito a la *Penca Mundial Da!* 🏆\n\n`+
       `Acertá los resultados del Mundial, elegí al campeón y competí por premios increíbles:\n\n`+
@@ -611,6 +621,22 @@ function Tabla({usuarios,resultados,campeonReal}){
       `¡Entrá, jugá y ganá! 👇\nhttps://penca-da.vercel.app`;
     window.open(`https://api.whatsapp.com/send?text=${encodeURIComponent(msg)}`,"_blank");
   };
+
+  const rows=usuarios.map(u=>{
+    const fbKey=u.nombre.replace(/[.#$\[\]/]/g,"_")+"__"+u.empresa.replace(/[.#$\[\]/]/g,"_");
+    const preds=fbPreds[fbKey]||{};
+    let total=0,exactos=0,resultadosOk=0;
+    Object.entries(preds).forEach(([id,pred])=>{
+      const real=resultados[id];
+      const pts=calcPuntos(pred,real);
+      if(pts===3){total+=3;exactos++;}
+      else if(pts===1){total+=1;resultadosOk++;}
+    });
+    const predCampeon=fbCampeones[fbKey]||"";
+    if(campeonReal&&predCampeon===campeonReal) total+=5;
+    const acertoCampeon=campeonReal&&predCampeon===campeonReal;
+    return{...u,total,exactos,resultadosOk,predCampeon,acertoCampeon};
+  }).sort((a,b)=>b.total-a.total);
 
   return(
     <div style={{maxWidth:640,margin:"0 auto",padding:"0 16px 24px"}}>
@@ -637,7 +663,13 @@ function Tabla({usuarios,resultados,campeonReal}){
         </div>
       )}
 
-      {rows.length===0&&(
+      {loading&&(
+        <p style={{color:"rgba(255,255,255,0.4)",textAlign:"center",padding:24}}>
+          Cargando participantes...
+        </p>
+      )}
+
+      {!loading&&rows.length===0&&(
         <p style={{color:"rgba(255,255,255,0.35)",textAlign:"center"}}>
           Todavía no hay participantes.
         </p>
@@ -680,356 +712,6 @@ function Tabla({usuarios,resultados,campeonReal}){
         <span>~ Resultado = <strong style={{color:DA_YELLOW}}>1 pt</strong></span>
         <span>🏆 Campeón = <strong style={{color:DA_TEAL}}>5 pts</strong></span>
         <span>✗ Error = <strong style={{color:"#E53E3E"}}>0 pts</strong></span>
-      </div>
-    </div>
-  );
-}
-
-// ── PREMIOS ────────────────────────────────────────────────────────────────────
-function Premios(){
-  const premios=[
-    {
-      pos:1, emoji:"🥇", label:"1er Premio",
-      titulo:"$5.000 pesos",
-      desc:"Gift card para gastar como quieras.",
-      bg:`linear-gradient(135deg,#B8860B22,#F5A62318)`,
-      border:"rgba(245,166,35,0.5)",
-      color:"#F5A623",
-      size:72,
-    },
-    {
-      pos:2, emoji:"🥈", label:"2do Premio",
-      titulo:"$2.500 pesos",
-      desc:"Gift card para gastar como quieras.",
-      bg:`linear-gradient(135deg,#71717a22,#a1a1aa18)`,
-      border:"rgba(161,161,170,0.4)",
-      color:"#CBD5E0",
-      size:62,
-    },
-    {
-      pos:3, emoji:"🥉", label:"3er Premio",
-      titulo:"Canguro con diseño a elección",
-      desc:"Un canguro personalizado con el diseño que más te guste, producido por Da!",
-      bg:`linear-gradient(135deg,#7c3d1222,#b4541018)`,
-      border:"rgba(180,84,16,0.4)",
-      color:"#ED8936",
-      size:54,
-    },
-    {
-      pos:4, emoji:"🎩", label:"4to Premio",
-      titulo:"Gorro bordado con diseño a elección",
-      desc:"Un gorro bordado premium personalizado con tu diseño favorito.",
-      bg:`linear-gradient(135deg,#1a365d22,#2a4a7f18)`,
-      border:`rgba(42,191,191,0.3)`,
-      color:DA_TEAL,
-      size:48,
-    },
-  ];
-
-  const recomendarWP=()=>{
-    const msg=`⚽ ¡Te invito a la *Penca Mundial Da!* 🏆\n\n`+
-      `Acertá los resultados del Mundial, elegí al campeón y competí por premios increíbles:\n\n`+
-      `🥇 1er premio: $5.000 para gastar como quieras\n`+
-      `🥈 2do premio: $2.500 para gastar como quieras\n`+
-      `🥉 3er premio: Canguro con diseño a elección\n`+
-      `4️⃣ 4to premio: Gorro bordado con diseño a elección\n\n`+
-      `Podés conocer el universo Da! en www.dapersonalizados.com.uy\n\n`+
-      `¡Entrá, jugá y ganá! 👇\nhttps://penca-da.vercel.app`;
-    window.open(`https://api.whatsapp.com/send?text=${encodeURIComponent(msg)}`,"_blank");
-  };
-
-  return(
-    <div style={{maxWidth:560,margin:"0 auto",padding:"0 16px 40px"}}>
-
-      {/* Header */}
-      <div style={{textAlign:"center",marginBottom:28}}>
-        <div style={{fontFamily:"'Barlow Condensed',sans-serif",fontWeight:700,
-          fontSize:30,color:DA_YELLOW,letterSpacing:3,textTransform:"uppercase",
-          lineHeight:1}}>
-          Premios
-        </div>
-        <div style={{color:DA_TEXT_LIGHT,fontSize:13,marginTop:6}}>
-          Los mejores puntajes se llevan estos premios 🎁
-        </div>
-      </div>
-
-      {/* Cards de premios */}
-      {premios.map(p=>(
-        <div key={p.pos} style={{
-          background:p.bg,border:`1px solid ${p.border}`,
-          borderRadius:18,padding:"20px 22px",marginBottom:14,
-          display:"flex",alignItems:"center",gap:18,
-          transition:"transform .15s",
-        }}>
-          {/* Número grande */}
-          <div style={{
-            fontFamily:"'Barlow Condensed',sans-serif",fontWeight:900,
-            fontSize:p.size,color:p.color,lineHeight:1,
-            opacity:0.9,flexShrink:0,width:52,textAlign:"center",
-          }}>
-            {p.emoji}
-          </div>
-
-          <div style={{flex:1}}>
-            <div style={{display:"flex",alignItems:"center",gap:8,marginBottom:4}}>
-              <span style={{background:p.border,color:p.color,
-                fontFamily:"'Barlow Condensed',sans-serif",fontWeight:700,
-                fontSize:11,letterSpacing:2,textTransform:"uppercase",
-                padding:"2px 8px",borderRadius:20}}>
-                {p.label}
-              </span>
-            </div>
-            <div style={{fontFamily:"'Barlow Condensed',sans-serif",fontWeight:700,
-              fontSize:22,color:"#fff",lineHeight:1.1,marginBottom:5}}>
-              {p.titulo}
-            </div>
-            <div style={{color:DA_TEXT_LIGHT,fontSize:13,lineHeight:1.4}}>
-              {p.desc}
-            </div>
-          </div>
-        </div>
-      ))}
-
-      {/* Sistema de puntos recordatorio */}
-      <div style={{background:DA_CARD,border:`1px solid rgba(255,255,255,0.07)`,
-        borderRadius:14,padding:"16px 18px",marginTop:6,marginBottom:20}}>
-        <div style={{fontFamily:"'Barlow Condensed',sans-serif",fontWeight:700,
-          fontSize:15,color:DA_TEXT_LIGHT,letterSpacing:2,textTransform:"uppercase",
-          marginBottom:12}}>
-          ¿Cómo sumar puntos?
-        </div>
-        <div style={{display:"flex",flexDirection:"column",gap:8}}>
-          {[
-            {ic:"✓",col:"#00C896",txt:"Marcador exacto",pts:"3 puntos"},
-            {ic:"~",col:DA_YELLOW,txt:"Resultado correcto (ganador o empate)",pts:"1 punto"},
-            {ic:"🏆",col:DA_TEAL,txt:"Campeón del Mundial acertado",pts:"5 puntos"},
-            {ic:"✗",col:"#E53E3E",txt:"Error en el resultado",pts:"0 puntos"},
-          ].map(r=>(
-            <div key={r.txt} style={{display:"flex",alignItems:"center",
-              justifyContent:"space-between",gap:10}}>
-              <div style={{display:"flex",alignItems:"center",gap:8}}>
-                <span style={{color:r.col,fontWeight:700,width:18,
-                  textAlign:"center",fontSize:14}}>{r.ic}</span>
-                <span style={{color:"rgba(255,255,255,0.6)",fontSize:13}}>{r.txt}</span>
-              </div>
-              <span style={{color:r.col,fontWeight:700,fontSize:13,
-                whiteSpace:"nowrap"}}>{r.pts}</span>
-            </div>
-          ))}
-        </div>
-      </div>
-
-      {/* Botón invitar */}
-      <button onClick={recomendarWP}
-        style={{width:"100%",background:"#25D366",color:"#fff",border:"none",
-          borderRadius:14,padding:"14px",fontSize:16,fontWeight:800,cursor:"pointer",
-          fontFamily:"'Barlow Condensed',sans-serif",letterSpacing:2,
-          textTransform:"uppercase"}}>
-        📨 Invitar amigos a la penca
-      </button>
-
-      <p style={{color:"rgba(255,255,255,0.2)",fontSize:11,textAlign:"center",
-        marginTop:14,lineHeight:1.5}}>
-        Los premios son entregados por Da! Personalizados al finalizar el torneo.<br/>
-        En caso de empate se considera mayor cantidad de exactos.
-      </p>
-    </div>
-  );
-}
-
-
-// ── FASES ELIMINATORIAS (vista usuario) ───────────────────────────────────────
-function FasesEliminatorias({usuario, resultados, fasesEquipos, onSave}){
-  const key=`da_pred_eli_${usuario}`;
-  const [preds,setPreds]=useState(()=>load(key,{}));
-  const [saved,setSaved]=useState(false);
-
-  const set=(id,side,val)=>setPreds(p=>({...p,[id]:{...p[id],[side]:val}}));
-
-  const guardar=()=>{
-    save(key,preds); onSave();
-    setSaved(true); setTimeout(()=>setSaved(false),2500);
-  };
-
-  const hayAlgunaFase = FASES_ELIMINATORIAS.some(fase =>
-    fase.partidos.some(p => {
-      const eq = fasesEquipos[p.id] || {};
-      return eq.local && eq.visitante;
-    })
-  );
-
-  if(!hayAlgunaFase) return(
-    <div style={{maxWidth:680,margin:"0 auto",padding:"24px 16px",textAlign:"center"}}>
-      <div style={{fontSize:40,marginBottom:16}}>⏳</div>
-      <div style={{color:DA_TEXT_LIGHT,fontSize:16}}>
-        Las fases eliminatorias aún no están disponibles.<br/>
-        Volvé cuando terminen los grupos.
-      </div>
-    </div>
-  );
-
-  return(
-    <div style={{maxWidth:680,margin:"0 auto",padding:"0 16px 90px"}}>
-      {FASES_ELIMINATORIAS.map(fase=>{
-        const partidosVisibles = fase.partidos.filter(p=>{
-          const eq = fasesEquipos[p.id]||{};
-          return eq.local && eq.visitante;
-        });
-        if(partidosVisibles.length===0) return null;
-        return(
-          <div key={fase.id} style={{marginBottom:28}}>
-            <div style={{display:"flex",alignItems:"center",gap:10,
-              marginBottom:12,borderBottom:`2px solid ${DA_YELLOW}33`,paddingBottom:8}}>
-              <span style={{background:DA_YELLOW,color:"#111",
-                fontFamily:"'Barlow Condensed',sans-serif",fontWeight:700,
-                fontSize:18,padding:"2px 12px",borderRadius:6}}>
-                {fase.label.toUpperCase()}
-              </span>
-            </div>
-            {partidosVisibles.map(p=>{
-              const eq=fasesEquipos[p.id]||{};
-              const pred=preds[p.id]||{local:"",visitante:""};
-              const real=resultados[p.id];
-              const pts=calcPuntos(pred,real);
-              const locked=!!(real?.local!==undefined&&real?.local!=="");
-              return(
-                <div key={p.id} style={{
-                  display:"flex",alignItems:"center",gap:8,
-                  background:DA_CARD,borderRadius:12,padding:"11px 13px",marginBottom:7,
-                  border:pts===3?`1px solid #00C89666`
-                    :pts===1?`1px solid ${DA_YELLOW}66`
-                    :`1px solid rgba(255,255,255,0.06)`}}>
-                  <span style={{flex:1,textAlign:"right",fontSize:13,fontWeight:600,color:"#fff"}}>
-                    {FLAGS[eq.local]||"🏳️"} {eq.local||"?"}
-                  </span>
-                  <input type="number" min="0" max="20" value={pred.local}
-                    onChange={e=>set(p.id,"local",e.target.value)} disabled={locked}
-                    style={{width:44,textAlign:"center",fontSize:20,fontWeight:800,
-                      background:locked?"rgba(255,255,255,0.03)":"rgba(42,191,191,0.1)",
-                      border:`2px solid ${locked?"rgba(255,255,255,0.1)":DA_TEAL+"66"}`,
-                      borderRadius:8,color:locked?"rgba(255,255,255,0.3)":"#fff",
-                      padding:"6px 2px",outline:"none"}}/>
-                  <span style={{color:"rgba(255,255,255,0.2)",fontSize:12}}>—</span>
-                  <input type="number" min="0" max="20" value={pred.visitante}
-                    onChange={e=>set(p.id,"visitante",e.target.value)} disabled={locked}
-                    style={{width:44,textAlign:"center",fontSize:20,fontWeight:800,
-                      background:locked?"rgba(255,255,255,0.03)":"rgba(42,191,191,0.1)",
-                      border:`2px solid ${locked?"rgba(255,255,255,0.1)":DA_TEAL+"66"}`,
-                      borderRadius:8,color:locked?"rgba(255,255,255,0.3)":"#fff",
-                      padding:"6px 2px",outline:"none"}}/>
-                  <span style={{flex:1,fontSize:13,fontWeight:600,color:"#fff"}}>
-                    {FLAGS[eq.visitante]||"🏳️"} {eq.visitante||"?"}
-                  </span>
-                  <span style={{fontSize:11,color:"rgba(255,255,255,0.25)",minWidth:32,textAlign:"right"}}>
-                    {p.fecha}
-                  </span>
-                  {pts!==null&&(
-                    <span style={{background:pts===3?"#00C896":pts===1?DA_YELLOW:"#E53E3E",
-                      color:"#111",borderRadius:5,padding:"2px 7px",
-                      fontSize:11,fontWeight:700,marginLeft:4}}>
-                      {pts===3?"✓ +3":pts===1?"~+1":"✗"}
-                    </span>
-                  )}
-                </div>
-              );
-            })}
-          </div>
-        );
-      })}
-
-      <div style={{position:"fixed",bottom:20,left:"50%",
-        transform:"translateX(-50%)",zIndex:100,
-        display:"flex",gap:8,alignItems:"center",
-        background:"rgba(26,32,44,0.85)",backdropFilter:"blur(10px)",
-        borderRadius:50,padding:"8px 12px",
-        border:"1px solid rgba(255,255,255,0.08)"}}>
-        <button onClick={guardar}
-          style={{background:saved?"#00C896":DA_YELLOW,color:"#111",
-            border:"none",borderRadius:50,padding:"10px 26px",
-            fontSize:14,fontWeight:800,cursor:"pointer",
-            fontFamily:"'Barlow Condensed',sans-serif",
-            letterSpacing:2,textTransform:"uppercase",transition:"background .3s"}}>
-          {saved?"✓ Listo":"Guardar"}
-        </button>
-      </div>
-    </div>
-  );
-}
-
-// ── ADMIN FASES (admin carga equipos de cada cruce) ───────────────────────────
-function AdminFases({fasesEquipos, onUpdate}){
-  const [local,setLocal]=useState({...fasesEquipos});
-
-  const setEq=(id,side,val)=>setLocal(p=>({...p,[id]:{...p[id],[side]:val}}));
-
-  const guardar=async()=>{
-    onUpdate(local);
-    save("da_fases_equipos", local);
-    await fbSet("fases_equipos", local);
-    alert("✅ Cruces guardados");
-  };
-
-  return(
-    <div style={{maxWidth:680,margin:"0 auto",padding:"0 16px 80px"}}>
-      <div style={{background:"rgba(229,62,62,0.1)",
-        border:"1px solid rgba(229,62,62,0.3)",borderRadius:12,
-        padding:"11px 16px",marginBottom:22,textAlign:"center",
-        color:"#E53E3E",fontWeight:700,fontSize:13}}>
-        🔒 Admin — Cargar equipos de cada cruce eliminatorio
-      </div>
-
-      {FASES_ELIMINATORIAS.map(fase=>(
-        <div key={fase.id} style={{marginBottom:24}}>
-          <div style={{fontFamily:"'Barlow Condensed',sans-serif",fontWeight:700,
-            fontSize:18,color:DA_YELLOW,marginBottom:10,letterSpacing:2}}>
-            {fase.label.toUpperCase()}
-          </div>
-          {fase.partidos.map(p=>{
-            const eq=local[p.id]||{local:"",visitante:""};
-            return(
-              <div key={p.id} style={{
-                display:"flex",alignItems:"center",gap:8,flexWrap:"wrap",
-                background:DA_CARD,borderRadius:10,padding:"10px 12px",marginBottom:6,
-                border:`1px solid rgba(255,255,255,0.06)`}}>
-                <span style={{color:DA_TEXT_LIGHT,fontSize:12,minWidth:80}}>{p.label}</span>
-                <select value={eq.local||""} onChange={e=>setEq(p.id,"local",e.target.value)}
-                  style={{flex:1,background:"rgba(255,255,255,0.07)",
-                    border:`1px solid ${DA_YELLOW}44`,borderRadius:8,
-                    color:eq.local?"#fff":"rgba(255,255,255,0.4)",
-                    fontSize:13,padding:"7px 10px",outline:"none",cursor:"pointer",
-                    minWidth:120}}>
-                  <option value="">Local...</option>
-                  {EQUIPOS_TODOS.map(eq2=>(
-                    <option key={eq2} value={eq2} style={{background:"#2D3748"}}>{FLAGS[eq2]||""} {eq2}</option>
-                  ))}
-                </select>
-                <span style={{color:"rgba(255,255,255,0.3)"}}>vs</span>
-                <select value={eq.visitante||""} onChange={e=>setEq(p.id,"visitante",e.target.value)}
-                  style={{flex:1,background:"rgba(255,255,255,0.07)",
-                    border:`1px solid ${DA_YELLOW}44`,borderRadius:8,
-                    color:eq.visitante?"#fff":"rgba(255,255,255,0.4)",
-                    fontSize:13,padding:"7px 10px",outline:"none",cursor:"pointer",
-                    minWidth:120}}>
-                  <option value="">Visitante...</option>
-                  {EQUIPOS_TODOS.map(eq2=>(
-                    <option key={eq2} value={eq2} style={{background:"#2D3748"}}>{FLAGS[eq2]||""} {eq2}</option>
-                  ))}
-                </select>
-                <span style={{color:DA_TEXT_LIGHT,fontSize:11}}>{p.fecha}</span>
-              </div>
-            );
-          })}
-        </div>
-      ))}
-
-      <div style={{textAlign:"center",marginTop:10}}>
-        <button onClick={guardar}
-          style={{background:"#E53E3E",color:"#fff",border:"none",
-            borderRadius:10,padding:"12px 30px",fontSize:14,fontWeight:700,
-            cursor:"pointer",fontFamily:"'Barlow Condensed',sans-serif",
-            letterSpacing:2,textTransform:"uppercase"}}>
-          Guardar Cruces
-        </button>
       </div>
     </div>
   );
@@ -1291,8 +973,7 @@ function PencaApp(){
               onSave={()=>setTabKey(k=>k+1)}/>
           )}
           {tab==="tabla"&&(
-            <Tabla key={tabKey} usuarios={usuarios}
-              resultados={resultados} campeonReal={campeonReal}/>
+            <Tabla key={tabKey} resultados={resultados} campeonReal={campeonReal}/>
           )}
           {tab==="eliminatorias"&&(
             <FasesEliminatorias usuario={usuario} resultados={resultados}
