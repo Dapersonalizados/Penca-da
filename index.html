@@ -717,6 +717,85 @@ function Tabla({resultados,campeonReal}){
   );
 }
 
+// ── ADMIN FASES (admin carga equipos de cada cruce) ───────────────────────────
+function AdminFases({fasesEquipos, onUpdate}){
+  const [local,setLocal]=useState({...fasesEquipos});
+
+  const setEq=(id,side,val)=>setLocal(p=>({...p,[id]:{...p[id],[side]:val}}));
+
+  const guardar=async()=>{
+    onUpdate(local);
+    save("da_fases_equipos", local);
+    await fbSet("fases_equipos", local);
+    alert("✅ Cruces guardados");
+  };
+
+  return(
+    <div style={{maxWidth:680,margin:"0 auto",padding:"0 16px 80px"}}>
+      <div style={{background:"rgba(229,62,62,0.1)",
+        border:"1px solid rgba(229,62,62,0.3)",borderRadius:12,
+        padding:"11px 16px",marginBottom:22,textAlign:"center",
+        color:"#E53E3E",fontWeight:700,fontSize:13}}>
+        🔒 Admin — Cargar equipos de cada cruce eliminatorio
+      </div>
+
+      {FASES_ELIMINATORIAS.map(fase=>(
+        <div key={fase.id} style={{marginBottom:24}}>
+          <div style={{fontFamily:"'Barlow Condensed',sans-serif",fontWeight:700,
+            fontSize:18,color:DA_YELLOW,marginBottom:10,letterSpacing:2}}>
+            {fase.label.toUpperCase()}
+          </div>
+          {fase.partidos.map(p=>{
+            const eq=local[p.id]||{local:"",visitante:""};
+            return(
+              <div key={p.id} style={{
+                display:"flex",alignItems:"center",gap:8,flexWrap:"wrap",
+                background:DA_CARD,borderRadius:10,padding:"10px 12px",marginBottom:6,
+                border:`1px solid rgba(255,255,255,0.06)`}}>
+                <span style={{color:DA_TEXT_LIGHT,fontSize:12,minWidth:80}}>{p.label}</span>
+                <select value={eq.local||""} onChange={e=>setEq(p.id,"local",e.target.value)}
+                  style={{flex:1,background:"rgba(255,255,255,0.07)",
+                    border:`1px solid ${DA_YELLOW}44`,borderRadius:8,
+                    color:eq.local?"#fff":"rgba(255,255,255,0.4)",
+                    fontSize:13,padding:"7px 10px",outline:"none",cursor:"pointer",
+                    minWidth:120}}>
+                  <option value="">Local...</option>
+                  {EQUIPOS_TODOS.map(eq2=>(
+                    <option key={eq2} value={eq2} style={{background:"#2D3748"}}>{FLAGS[eq2]||""} {eq2}</option>
+                  ))}
+                </select>
+                <span style={{color:"rgba(255,255,255,0.3)"}}>vs</span>
+                <select value={eq.visitante||""} onChange={e=>setEq(p.id,"visitante",e.target.value)}
+                  style={{flex:1,background:"rgba(255,255,255,0.07)",
+                    border:`1px solid ${DA_YELLOW}44`,borderRadius:8,
+                    color:eq.visitante?"#fff":"rgba(255,255,255,0.4)",
+                    fontSize:13,padding:"7px 10px",outline:"none",cursor:"pointer",
+                    minWidth:120}}>
+                  <option value="">Visitante...</option>
+                  {EQUIPOS_TODOS.map(eq2=>(
+                    <option key={eq2} value={eq2} style={{background:"#2D3748"}}>{FLAGS[eq2]||""} {eq2}</option>
+                  ))}
+                </select>
+                <span style={{color:DA_TEXT_LIGHT,fontSize:11}}>{p.fecha}</span>
+              </div>
+            );
+          })}
+        </div>
+      ))}
+
+      <div style={{textAlign:"center",marginTop:10}}>
+        <button onClick={guardar}
+          style={{background:"#E53E3E",color:"#fff",border:"none",
+            borderRadius:10,padding:"12px 30px",fontSize:14,fontWeight:700,
+            cursor:"pointer",fontFamily:"'Barlow Condensed',sans-serif",
+            letterSpacing:2,textTransform:"uppercase"}}>
+          Guardar Cruces
+        </button>
+      </div>
+    </div>
+  );
+}
+
 // ── ADMIN ──────────────────────────────────────────────────────────────────────
 function Admin({resultados,campeonReal,onUpdate,onCampeon}){
   const [local,setLocal]=useState({});
