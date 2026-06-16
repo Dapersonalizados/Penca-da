@@ -870,7 +870,7 @@ function WpList(){
       {show&&(
         <div style={{display:"flex",flexDirection:"column",gap:8}}>
           {lista.map(u=>(
-            <div key={u.key||u.nombre} style={{
+            <div key={u.fbKey||u.key||u.nombre} style={{
               display:"flex",alignItems:"center",justifyContent:"space-between",
               background:"rgba(255,255,255,0.04)",borderRadius:8,padding:"8px 12px"}}>
               <div>
@@ -904,7 +904,13 @@ function GestorUsuarios(){
   const cargar=async()=>{
     setLoading(true);
     const u=await fbGet("usuarios");
-    setUsuarios(u ? Object.values(u) : []);
+    if(u){
+      // Guardar la clave de Firebase junto con los datos
+      const lista = Object.entries(u).map(([fbKey,datos])=>({...datos,fbKey}));
+      setUsuarios(lista);
+    } else {
+      setUsuarios([]);
+    }
     setLoading(false);
   };
 
@@ -912,10 +918,11 @@ function GestorUsuarios(){
 
   const borrar=async(u)=>{
     if(!confirm(`¿Borrar a ${u.nombre} (${u.empresa})?`)) return;
-    setBorrando(u.key);
-    await fbDelete(`usuarios/${u.key}`);
-    await fbDelete(`predicciones/${u.key}`);
-    await fbDelete(`campeones/${u.key}`);
+    const k = u.fbKey || u.key;
+    setBorrando(k);
+    await fbDelete(`usuarios/${k}`);
+    await fbDelete(`predicciones/${k}`);
+    await fbDelete(`campeones/${k}`);
     await cargar();
     setBorrando(null);
   };
@@ -936,7 +943,7 @@ function GestorUsuarios(){
       )}
 
       {!loading&&usuarios.map(u=>(
-        <div key={u.key||u.nombre} style={{
+        <div key={u.fbKey||u.key||u.nombre} style={{
           display:"flex",alignItems:"center",gap:10,
           background:"rgba(255,255,255,0.04)",borderRadius:10,
           padding:"9px 12px",marginBottom:7}}>
@@ -948,13 +955,13 @@ function GestorUsuarios(){
           </div>
           <button
             onClick={()=>borrar(u)}
-            disabled={borrando===u.key}
+            disabled={borrando===(u.fbKey||u.key)}
             style={{background:"rgba(229,62,62,0.15)",
               border:"1px solid rgba(229,62,62,0.4)",
               color:"#E53E3E",borderRadius:8,padding:"5px 12px",
               cursor:"pointer",fontSize:12,fontWeight:700,
-              opacity:borrando===u.key?0.5:1}}>
-            {borrando===u.key?"Borrando...":"✕ Borrar"}
+              opacity:borrando===(u.fbKey||u.key)?0.5:1}}>
+            {borrando===(u.fbKey||u.key)?"Borrando...":"✕ Borrar"}
           </button>
         </div>
       ))}
