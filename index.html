@@ -221,6 +221,56 @@ const FASES_ELIMINATORIAS = [
   },
 ];
 
+
+// ── MAPEO DE NOMBRES (API usa inglés, nosotros usamos español) ────────────────
+const MAPEO_EQUIPOS = {
+  "Mexico":"México","South Africa":"Sudáfrica","South Korea":"Corea del Sur","Czech Republic":"Rep. Checa",
+  "Canada":"Canadá","Bosnia and Herzegovina":"Bosnia y Herz.","Qatar":"Qatar","Switzerland":"Suiza",
+  "Brazil":"Brasil","Morocco":"Marruecos","Haiti":"Haití","Scotland":"Escocia",
+  "United States":"Estados Unidos","Paraguay":"Paraguay","Australia":"Australia","Turkey":"Turquía","Türkiye":"Turquía",
+  "Germany":"Alemania","Curacao":"Curazao","Curaçao":"Curazao","Ivory Coast":"Costa de Marfil","Côte d'Ivoire":"Costa de Marfil","Ecuador":"Ecuador",
+  "Netherlands":"Países Bajos","Japan":"Japón","Sweden":"Suecia","Tunisia":"Túnez",
+  "Belgium":"Bélgica","Egypt":"Egipto","Iran":"Irán","New Zealand":"Nueva Zelanda",
+  "Spain":"España","Cape Verde":"Cabo Verde","Saudi Arabia":"Arabia Saudita","Uruguay":"Uruguay",
+  "France":"Francia","Senegal":"Senegal","Iraq":"Irak","Norway":"Noruega",
+  "Argentina":"Argentina","Algeria":"Argelia","Austria":"Austria","Jordan":"Jordania",
+  "Portugal":"Portugal","DR Congo":"RD Congo","Congo DR":"RD Congo","Uzbekistan":"Uzbekistán","Colombia":"Colombia",
+  "England":"Inglaterra","Croatia":"Croacia","Ghana":"Ghana","Panama":"Panamá",
+};
+
+function traducirEquipo(nombreApi){
+  return MAPEO_EQUIPOS[nombreApi] || nombreApi;
+}
+
+// ── SINCRONIZAR RESULTADOS AUTOMÁTICOS ─────────────────────────────────────────
+const API_BRIDGE_URL = "https://penca-da.vercel.app/api/resultados";
+
+async function sincronizarResultadosAuto(){
+  try{
+    const r = await fetch(API_BRIDGE_URL);
+    if(!r.ok) return null;
+    const data = await r.json();
+    return data.resultados || [];
+  }catch(e){
+    console.error("Error sincronizando resultados", e);
+    return null;
+  }
+}
+
+// Busca el partido en GRUPOS que coincide con un resultado de la API
+function encontrarPartidoId(local, visitante){
+  const lEs = traducirEquipo(local);
+  const vEs = traducirEquipo(visitante);
+  for(const g of GRUPOS){
+    for(const p of g.partidos){
+      if((p.local===lEs && p.visitante===vEs) || (p.local===vEs && p.visitante===lEs)){
+        return {id:p.id, invertido: p.local===vEs};
+      }
+    }
+  }
+  return null;
+}
+
 const FLAGS = {
   "México":"🇲🇽","Sudáfrica":"🇿🇦","Corea del Sur":"🇰🇷","Rep. Checa":"🇨🇿",
   "Canadá":"🇨🇦","Bosnia y Herz.":"🇧🇦","Qatar":"🇶🇦","Suiza":"🇨🇭",
@@ -969,6 +1019,92 @@ function GestorUsuarios(){
   );
 }
 
+// ── SINCRONIZADOR AUTOMÁTICO (admin) ──────────────────────────────────────────
+function SincronizadorAuto({resultados, onUpdate}){
+  const [sincronizando,setSincronizando]=useState(false);
+  const [mensaje,setMensaje]=useState("");
+  const [ultimaSinc,setUltimaSinc]=useState(()=>load("da_ultima_sinc",""));
+
+  const sincronizar=async()=>{
+    setSincronizando(true);
+    setMensaje("");
+    const apiResultados = await sincronizarResultadosAuto();
+    if(!apiResultados){
+      setMensaje("⚠️ No se pudo conectar con la API. Intentá de nuevo en un momento.");
+      setSincronizando(false);
+      return;
+    }
+    if(apiResultados.length===0){
+      setMensaje("ℹ️ Todavía no hay partidos finalizados según la API.");
+      setSincronizando(false);
+      return;
+    }
+
+    let actualizados=0;
+    const nuevos={...resultados};
+    apiResultados.forEach(m=>{
+      if(m.golesLocal===null||m.golesLocal===undefined) return;
+      const match = encontrarPartidoId(m.local, m.visitante);
+      if(!match) return;
+      const yaEstaba = nuevos[match.id]?.local!==undefined && nuevos[match.id]?.local!=="";
+      const gl = match.invertido ? m.golesVisitante : m.golesLocal;
+      const gv = match.invertido ? m.golesLocal : m.golesVisitante;
+      const valorNuevo = {local:String(gl), visitante:String(gv)};
+      const valorViejo = nuevos[match.id];
+      const cambio = !yaEstaba || valorViejo?.local!==valorNuevo.local || valorViejo?.visitante!==valorNuevo.visitante;
+      if(cambio){
+        nuevos[match.id]=valorNuevo;
+        actualizados++;
+      }
+    });
+
+    if(actualizados>0){
+      onUpdate(nuevos);
+      save("da_resultados",nuevos);
+      await fbSet("resultados", nuevos);
+      setMensaje(`✅ ${actualizados} resultado(s) actualizado(s) automáticamente.`);
+    } else {
+      setMensaje("✓ Ya estaba todo al día, no había cambios.");
+    }
+
+    const ahora = new Date().toLocaleString("es-UY");
+    setUltimaSinc(ahora);
+    save("da_ultima_sinc", ahora);
+    setSincronizando(false);
+  };
+
+  return(
+    <div style={{background:`${DA_TEAL}10`,border:`1px solid ${DA_TEAL}33`,
+      borderRadius:12,padding:"14px 16px",marginBottom:24}}>
+      <div style={{display:"flex",alignItems:"center",justifyContent:"space-between",
+        flexWrap:"wrap",gap:10}}>
+        <div>
+          <div style={{color:DA_TEAL,fontWeight:700,fontSize:14}}>
+            🔄 Sincronización automática
+          </div>
+          {ultimaSinc&&(
+            <div style={{color:"rgba(255,255,255,0.3)",fontSize:11,marginTop:2}}>
+              Última vez: {ultimaSinc}
+            </div>
+          )}
+        </div>
+        <button onClick={sincronizar} disabled={sincronizando}
+          style={{background:sincronizando?"rgba(255,255,255,0.1)":DA_TEAL,
+            color:sincronizando?"rgba(255,255,255,0.4)":"#111",
+            border:"none",borderRadius:8,padding:"8px 18px",
+            cursor:sincronizando?"default":"pointer",fontSize:13,fontWeight:700}}>
+          {sincronizando?"Sincronizando...":"Sincronizar ahora"}
+        </button>
+      </div>
+      {mensaje&&(
+        <div style={{marginTop:10,fontSize:12,color:"rgba(255,255,255,0.6)"}}>
+          {mensaje}
+        </div>
+      )}
+    </div>
+  );
+}
+
 // ── ADMIN ──────────────────────────────────────────────────────────────────────
 function Admin({resultados,campeonReal,onUpdate,onCampeon}){
   const [local,setLocal]=useState({});
@@ -1008,6 +1144,7 @@ function Admin({resultados,campeonReal,onUpdate,onCampeon}){
 
       <WpList/>
       <GestorUsuarios/>
+      <SincronizadorAuto resultados={resultados} onUpdate={onUpdate}/>
 
       {/* Campeón real */}
       <div style={{background:`${DA_YELLOW}10`,border:`1px solid ${DA_YELLOW}33`,
