@@ -973,7 +973,15 @@ function GestorUsuarios(){
 function Admin({resultados,campeonReal,onUpdate,onCampeon}){
   const [local,setLocal]=useState({});
   const [campeonInput,setCampeonInput]=useState(campeonReal||"");
-  const setScore=(id,side,val)=>setLocal(p=>({...p,[id]:{...p[id],[side]:val}}));
+  // Al cambiar un campo, partir siempre de lo ya guardado (resultados) + lo editado en esta sesión (local)
+  const setScore=(id,side,val)=>setLocal(p=>({
+    ...p,
+    [id]:{
+      local: p[id]?.local !== undefined ? p[id].local : (resultados[id]?.local ?? ""),
+      visitante: p[id]?.visitante !== undefined ? p[id].visitante : (resultados[id]?.visitante ?? ""),
+      [side]: val,
+    }
+  }));
 
   const guardar=async()=>{
     const merged={...resultados,...local};
@@ -1031,7 +1039,9 @@ function Admin({resultados,campeonReal,onUpdate,onCampeon}){
           </div>
           {g.partidos.map(p=>{
             const cur=local[p.id]||resultados[p.id]||{local:"",visitante:""};
-            const ok=!!(resultados[p.id]?.local!==undefined&&resultados[p.id]?.local!=="");
+            const rl=resultados[p.id]?.local;
+            const rv=resultados[p.id]?.visitante;
+            const ok=(rl!==undefined&&rl!==""&&rv!==undefined&&rv!=="");
             return(
               <div key={p.id} style={{
                 display:"flex",alignItems:"center",gap:8,
