@@ -1040,12 +1040,16 @@ function SincronizadorAuto({resultados, onUpdate}){
       return;
     }
 
-    let actualizados=0;
+    // Partidos que el admin corrigió/cargó a mano quedan protegidos para siempre
+    const bloqueados = load("da_resultados_manuales", {});
+
+    let actualizados=0, omitidos=0;
     const nuevos={...resultados};
     apiResultados.forEach(m=>{
       if(m.golesLocal===null||m.golesLocal===undefined) return;
       const match = encontrarPartidoId(m.local, m.visitante);
       if(!match) return;
+      if(bloqueados[match.id]){ omitidos++; return; } // protegido, no tocar
       const yaEstaba = nuevos[match.id]?.local!==undefined && nuevos[match.id]?.local!=="";
       const gl = match.invertido ? m.golesVisitante : m.golesLocal;
       const gv = match.invertido ? m.golesLocal : m.golesVisitante;
@@ -1062,9 +1066,9 @@ function SincronizadorAuto({resultados, onUpdate}){
       onUpdate(nuevos);
       save("da_resultados",nuevos);
       await fbSet("resultados", nuevos);
-      setMensaje(`✅ ${actualizados} resultado(s) actualizado(s) automáticamente.`);
+      setMensaje(`✅ ${actualizados} resultado(s) actualizado(s)`+(omitidos>0?` · ${omitidos} protegido(s) sin tocar.`:"."));
     } else {
-      setMensaje("✓ Ya estaba todo al día, no había cambios.");
+      setMensaje("✓ Ya estaba todo al día, no había cambios."+(omitidos>0?` (${omitidos} protegido(s))`:""));
     }
 
     const ahora = new Date().toLocaleString("es-UY");
@@ -1124,6 +1128,11 @@ function Admin({resultados,campeonReal,onUpdate,onCampeon}){
     onUpdate(merged);
     save("da_resultados",merged);
     await fbSet("resultados", merged);
+    // Marcar como "manual" cada partido que se tocó en esta edición,
+    // para que la sincronización automática nunca lo sobreescriba
+    const bloqueados = load("da_resultados_manuales", {});
+    Object.keys(local).forEach(id=>{ bloqueados[id]=true; });
+    save("da_resultados_manuales", bloqueados);
     if(campeonInput){
       onCampeon(campeonInput);
       save("da_campeon_real",campeonInput);
