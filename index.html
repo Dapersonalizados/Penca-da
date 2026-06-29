@@ -43,6 +43,8 @@ const EQUIPOS_TODOS = [
   "Argentina","Argelia","Austria","Jordania",
   "Portugal","RD Congo","Uzbekistán","Colombia",
   "Inglaterra","Croacia","Ghana","Panamá",
+  // clasificados de mejores terceros
+  "Bosnia y Herzegovina","Ecuador","Paraguay","Senegal","Ghana","RD Congo","Argelia","Suecia",
 ];
 
 const GRUPOS = [
@@ -184,39 +186,60 @@ const GRUPOS = [
 // ── FASES ELIMINATORIAS (equipos cargados por admin) ──────────────────────────
 const FASES_ELIMINATORIAS = [
   {
+    id: "dieciseisavos", label: "16avos de Final",
+    partidos: [
+      {id:"R01", label:"Partido 1",  local:"Sudáfrica",    visitante:"Canadá",       fecha:"28 Jun"},
+      {id:"R02", label:"Partido 2",  local:"Alemania",     visitante:"Paraguay",     fecha:"29 Jun"},
+      {id:"R03", label:"Partido 3",  local:"Países Bajos", visitante:"Marruecos",    fecha:"29 Jun"},
+      {id:"R04", label:"Partido 4",  local:"Brasil",       visitante:"Japón",        fecha:"29 Jun"},
+      {id:"R05", label:"Partido 5",  local:"Francia",      visitante:"Suecia",       fecha:"30 Jun"},
+      {id:"R06", label:"Partido 6",  local:"Costa de Marfil", visitante:"Noruega",  fecha:"30 Jun"},
+      {id:"R07", label:"Partido 7",  local:"México",       visitante:"Bosnia y Herz.", fecha:"30 Jun"},
+      {id:"R08", label:"Partido 8",  local:"Bélgica",      visitante:"Ecuador",     fecha:"1 Jul"},
+      {id:"R09", label:"Partido 9",  local:"España",       visitante:"Argelia",     fecha:"1 Jul"},
+      {id:"R10", label:"Partido 10", local:"Australia",    visitante:"Egipto",      fecha:"1 Jul"},
+      {id:"R11", label:"Partido 11", local:"Estados Unidos", visitante:"Senegal",   fecha:"2 Jul"},
+      {id:"R12", label:"Partido 12", local:"Colombia",     visitante:"Ghana",       fecha:"2 Jul"},
+      {id:"R13", label:"Partido 13", local:"Portugal",     visitante:"Croacia",     fecha:"2 Jul"},
+      {id:"R14", label:"Partido 14", local:"Inglaterra",   visitante:"RD Congo",    fecha:"3 Jul"},
+      {id:"R15", label:"Partido 15", local:"Austria",      visitante:"Suiza",       fecha:"3 Jul"},
+      {id:"R16", label:"Partido 16", local:"Argentina",    visitante:"Cabo Verde",  fecha:"3 Jul"},
+    ]
+  },
+  {
     id: "octavos", label: "Octavos de Final",
     partidos: [
-      {id:"O1", label:"Partido 1", fecha:"Jul 4"},
-      {id:"O2", label:"Partido 2", fecha:"Jul 4"},
-      {id:"O3", label:"Partido 3", fecha:"Jul 5"},
-      {id:"O4", label:"Partido 4", fecha:"Jul 5"},
-      {id:"O5", label:"Partido 5", fecha:"Jul 6"},
-      {id:"O6", label:"Partido 6", fecha:"Jul 6"},
-      {id:"O7", label:"Partido 7", fecha:"Jul 7"},
-      {id:"O8", label:"Partido 8", fecha:"Jul 7"},
+      {id:"O1", label:"Partido 1", fecha:"4 Jul"},
+      {id:"O2", label:"Partido 2", fecha:"4 Jul"},
+      {id:"O3", label:"Partido 3", fecha:"5 Jul"},
+      {id:"O4", label:"Partido 4", fecha:"5 Jul"},
+      {id:"O5", label:"Partido 5", fecha:"6 Jul"},
+      {id:"O6", label:"Partido 6", fecha:"6 Jul"},
+      {id:"O7", label:"Partido 7", fecha:"7 Jul"},
+      {id:"O8", label:"Partido 8", fecha:"7 Jul"},
     ]
   },
   {
     id: "cuartos", label: "Cuartos de Final",
     partidos: [
-      {id:"Q1", label:"Partido 1", fecha:"Jul 11"},
-      {id:"Q2", label:"Partido 2", fecha:"Jul 11"},
-      {id:"Q3", label:"Partido 3", fecha:"Jul 12"},
-      {id:"Q4", label:"Partido 4", fecha:"Jul 12"},
+      {id:"Q1", label:"Partido 1", fecha:"11 Jul"},
+      {id:"Q2", label:"Partido 2", fecha:"11 Jul"},
+      {id:"Q3", label:"Partido 3", fecha:"12 Jul"},
+      {id:"Q4", label:"Partido 4", fecha:"12 Jul"},
     ]
   },
   {
     id: "semis", label: "Semifinales",
     partidos: [
-      {id:"S1", label:"Semifinal 1", fecha:"Jul 15"},
-      {id:"S2", label:"Semifinal 2", fecha:"Jul 16"},
+      {id:"S1", label:"Semifinal 1", fecha:"15 Jul"},
+      {id:"S2", label:"Semifinal 2", fecha:"16 Jul"},
     ]
   },
   {
     id: "final", label: "Final y 3° Puesto",
     partidos: [
-      {id:"F3", label:"Tercer Puesto", fecha:"Jul 19"},
-      {id:"F1", label:"Final", fecha:"Jul 20"},
+      {id:"F3", label:"Tercer Puesto", fecha:"19 Jul"},
+      {id:"F1", label:"Final",         fecha:"19 Jul"},
     ]
   },
 ];
