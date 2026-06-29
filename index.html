@@ -247,18 +247,20 @@ const FASES_ELIMINATORIAS = [
 
 // ── MAPEO DE NOMBRES (API usa inglés, nosotros usamos español) ────────────────
 const MAPEO_EQUIPOS = {
+  // openfootball usa nombres en inglés
   "Mexico":"México","South Africa":"Sudáfrica","South Korea":"Corea del Sur","Czech Republic":"Rep. Checa",
-  "Canada":"Canadá","Bosnia and Herzegovina":"Bosnia y Herz.","Qatar":"Qatar","Switzerland":"Suiza",
+  "Canada":"Canadá","Bosnia and Herzegovina":"Bosnia y Herz.","Bosnia Herzegovina":"Bosnia y Herz.","Qatar":"Qatar","Switzerland":"Suiza",
   "Brazil":"Brasil","Morocco":"Marruecos","Haiti":"Haití","Scotland":"Escocia",
-  "United States":"Estados Unidos","Paraguay":"Paraguay","Australia":"Australia","Turkey":"Turquía","Türkiye":"Turquía",
-  "Germany":"Alemania","Curacao":"Curazao","Curaçao":"Curazao","Ivory Coast":"Costa de Marfil","Côte d'Ivoire":"Costa de Marfil","Ecuador":"Ecuador",
+  "United States":"Estados Unidos","USA":"Estados Unidos","Paraguay":"Paraguay","Australia":"Australia","Turkey":"Turquía","Türkiye":"Turquía",
+  "Germany":"Alemania","Curacao":"Curazao","Curaçao":"Curazao","Ivory Coast":"Costa de Marfil","Côte d'Ivoire":"Costa de Marfil","Cote d'Ivoire":"Costa de Marfil","Ecuador":"Ecuador",
   "Netherlands":"Países Bajos","Japan":"Japón","Sweden":"Suecia","Tunisia":"Túnez",
   "Belgium":"Bélgica","Egypt":"Egipto","Iran":"Irán","New Zealand":"Nueva Zelanda",
   "Spain":"España","Cape Verde":"Cabo Verde","Saudi Arabia":"Arabia Saudita","Uruguay":"Uruguay",
   "France":"Francia","Senegal":"Senegal","Iraq":"Irak","Norway":"Noruega",
   "Argentina":"Argentina","Algeria":"Argelia","Austria":"Austria","Jordan":"Jordania",
-  "Portugal":"Portugal","DR Congo":"RD Congo","Congo DR":"RD Congo","Uzbekistan":"Uzbekistán","Colombia":"Colombia",
+  "Portugal":"Portugal","DR Congo":"RD Congo","Congo DR":"RD Congo","Dem. Rep. Congo":"RD Congo","Uzbekistan":"Uzbekistán","Colombia":"Colombia",
   "England":"Inglaterra","Croatia":"Croacia","Ghana":"Ghana","Panama":"Panamá",
+  "Bosnia":"Bosnia y Herz.",
 };
 
 function traducirEquipo(nombreApi){
@@ -1363,6 +1365,38 @@ function Admin({resultados,campeonReal,onUpdate,onCampeon}){
           })}
         </div>
       ))}
+
+      {/* 16avos de final */}
+      <div style={{marginTop:16,marginBottom:22}}>
+        <div style={{fontFamily:"'Barlow Condensed',sans-serif",fontWeight:700,
+          fontSize:18,color:DA_TEAL,marginBottom:9,letterSpacing:2}}>
+          16AVOS DE FINAL
+        </div>
+        {FASES_ELIMINATORIAS[0].partidos.map(p=>{
+          const cur=local[p.id]||resultados[p.id]||{local:"",visitante:""};
+          const rl=resultados[p.id]?.local;
+          const rv=resultados[p.id]?.visitante;
+          const ok=(rl!==undefined&&rl!==""&&rv!==undefined&&rv!=="");
+          return(
+            <div key={p.id} style={{
+              display:"flex",alignItems:"center",gap:8,
+              background:DA_CARD,borderRadius:10,padding:"9px 12px",marginBottom:5,
+              border:ok?`1px solid #00C89633`:`1px solid rgba(255,255,255,0.06)`}}>
+              <span style={{flex:1,textAlign:"right",fontSize:12,color:"#fff"}}>
+                {FLAGS[p.local]||""} {p.local}
+              </span>
+              <NumInput value={cur.local} onChange={v=>setScore(p.id,"local",v)}/>
+              <span style={{color:"rgba(255,255,255,0.2)"}}>—</span>
+              <NumInput value={cur.visitante} onChange={v=>setScore(p.id,"visitante",v)}/>
+              <span style={{flex:1,fontSize:12,color:"#fff"}}>
+                {FLAGS[p.visitante]||""} {p.visitante}
+              </span>
+              <span style={{fontSize:10,color:"rgba(255,255,255,0.25)",minWidth:28}}>{p.fecha}</span>
+              {ok&&<span style={{color:"#00C896",fontSize:12}}>✓</span>}
+            </div>
+          );
+        })}
+      </div>
 
       <div style={{textAlign:"center",marginTop:10}}>
         <button onClick={guardar}
