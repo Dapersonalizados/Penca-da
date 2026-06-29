@@ -832,6 +832,138 @@ function Tabla({resultados,campeonReal}){
   );
 }
 
+// ── FASES ELIMINATORIAS (vista usuario) ───────────────────────────────────────
+function FasesEliminatorias({usuario, empresa, resultados, fasesEquipos, onSave}){
+  const key=`da_pred_eli_${usuario}`;
+  const [preds,setPreds]=useState(()=>load(key,{}));
+  const [saved,setSaved]=useState(false);
+
+  const set=(id,side,val)=>setPreds(p=>({...p,[id]:{...p[id],[side]:val}}));
+
+  const guardar=async()=>{
+    save(key,preds);
+    const fbKey=(usuario+"__"+(empresa||"")).replace(/[.#$\[\]/]/g,"_");
+    await fbUpdate(`predicciones/${fbKey}`, preds);
+    onSave();
+    setSaved(true); setTimeout(()=>setSaved(false),2500);
+  };
+
+  // Para 16avos, los equipos están fijos en FASES_ELIMINATORIAS
+  // Para otras fases, vienen de fasesEquipos (cargados por admin)
+  const getEquipos=(fase, partido)=>{
+    if(fase.id==="dieciseisavos"){
+      return {local: partido.local, visitante: partido.visitante};
+    }
+    return fasesEquipos[partido.id] || {};
+  };
+
+  const hayAlgunaFase = FASES_ELIMINATORIAS.some(fase =>
+    fase.partidos.some(p => {
+      if(fase.id==="dieciseisavos") return true;
+      const eq = fasesEquipos[p.id] || {};
+      return eq.local && eq.visitante;
+    })
+  );
+
+  if(!hayAlgunaFase) return(
+    <div style={{maxWidth:680,margin:"0 auto",padding:"24px 16px",textAlign:"center"}}>
+      <div style={{fontSize:40,marginBottom:16}}>⏳</div>
+      <div style={{color:DA_TEXT_LIGHT,fontSize:16}}>
+        Las fases eliminatorias aún no están disponibles.<br/>
+        Volvé cuando terminen los grupos.
+      </div>
+    </div>
+  );
+
+  return(
+    <div style={{maxWidth:680,margin:"0 auto",padding:"0 16px 90px"}}>
+      {FASES_ELIMINATORIAS.map(fase=>{
+        const partidosVisibles = fase.partidos.filter(p=>{
+          if(fase.id==="dieciseisavos") return true;
+          const eq = fasesEquipos[p.id]||{};
+          return eq.local && eq.visitante;
+        });
+        if(partidosVisibles.length===0) return null;
+        return(
+          <div key={fase.id} style={{marginBottom:28}}>
+            <div style={{display:"flex",alignItems:"center",gap:10,
+              marginBottom:12,borderBottom:`2px solid ${DA_YELLOW}33`,paddingBottom:8}}>
+              <span style={{background:DA_YELLOW,color:"#111",
+                fontFamily:"'Barlow Condensed',sans-serif",fontWeight:700,
+                fontSize:18,padding:"2px 12px",borderRadius:6}}>
+                {fase.label.toUpperCase()}
+              </span>
+            </div>
+            {partidosVisibles.map(p=>{
+              const eq=getEquipos(fase,p);
+              const pred=preds[p.id]||{local:"",visitante:""};
+              const real=resultados[p.id];
+              const pts=calcPuntos(pred,real);
+              const locked=!!(real?.local!==undefined&&real?.local!=="");
+              return(
+                <div key={p.id} style={{
+                  display:"flex",alignItems:"center",gap:8,
+                  background:DA_CARD,borderRadius:12,padding:"11px 13px",marginBottom:7,
+                  border:pts===3?`1px solid #00C89666`
+                    :pts===1?`1px solid ${DA_YELLOW}66`
+                    :`1px solid rgba(255,255,255,0.06)`}}>
+                  <span style={{flex:1,textAlign:"right",fontSize:13,fontWeight:600,color:"#fff"}}>
+                    {FLAGS[eq.local]||"🏳️"} {eq.local||"?"}
+                  </span>
+                  <input type="number" min="0" max="20" value={pred.local}
+                    onChange={e=>set(p.id,"local",e.target.value)} disabled={locked}
+                    style={{width:44,textAlign:"center",fontSize:20,fontWeight:800,
+                      background:locked?"rgba(255,255,255,0.03)":"rgba(42,191,191,0.1)",
+                      border:`2px solid ${locked?"rgba(255,255,255,0.1)":DA_TEAL+"66"}`,
+                      borderRadius:8,color:locked?"rgba(255,255,255,0.3)":"#fff",
+                      padding:"6px 2px",outline:"none"}}/>
+                  <span style={{color:"rgba(255,255,255,0.2)",fontSize:12}}>—</span>
+                  <input type="number" min="0" max="20" value={pred.visitante}
+                    onChange={e=>set(p.id,"visitante",e.target.value)} disabled={locked}
+                    style={{width:44,textAlign:"center",fontSize:20,fontWeight:800,
+                      background:locked?"rgba(255,255,255,0.03)":"rgba(42,191,191,0.1)",
+                      border:`2px solid ${locked?"rgba(255,255,255,0.1)":DA_TEAL+"66"}`,
+                      borderRadius:8,color:locked?"rgba(255,255,255,0.3)":"#fff",
+                      padding:"6px 2px",outline:"none"}}/>
+                  <span style={{flex:1,fontSize:13,fontWeight:600,color:"#fff"}}>
+                    {FLAGS[eq.visitante]||"🏳️"} {eq.visitante||"?"}
+                  </span>
+                  <span style={{fontSize:11,color:"rgba(255,255,255,0.25)",minWidth:32,textAlign:"right"}}>
+                    {p.fecha}
+                  </span>
+                  {pts!==null&&(
+                    <span style={{background:pts===3?"#00C896":pts===1?DA_YELLOW:"#E53E3E",
+                      color:"#111",borderRadius:5,padding:"2px 7px",
+                      fontSize:11,fontWeight:700,marginLeft:4}}>
+                      {pts===3?"✓ +3":pts===1?"~+1":"✗"}
+                    </span>
+                  )}
+                </div>
+              );
+            })}
+          </div>
+        );
+      })}
+
+      <div style={{position:"fixed",bottom:20,left:"50%",
+        transform:"translateX(-50%)",zIndex:100,
+        display:"flex",gap:8,alignItems:"center",
+        background:"rgba(26,32,44,0.85)",backdropFilter:"blur(10px)",
+        borderRadius:50,padding:"8px 12px",
+        border:"1px solid rgba(255,255,255,0.08)"}}>
+        <button onClick={guardar}
+          style={{background:saved?"#00C896":DA_YELLOW,color:"#111",
+            border:"none",borderRadius:50,padding:"10px 26px",
+            fontSize:14,fontWeight:800,cursor:"pointer",
+            fontFamily:"'Barlow Condensed',sans-serif",
+            letterSpacing:2,textTransform:"uppercase",transition:"background .3s"}}>
+          {saved?"✓ Listo":"Guardar"}
+        </button>
+      </div>
+    </div>
+  );
+}
+
 // ── ADMIN FASES (admin carga equipos de cada cruce) ───────────────────────────
 function AdminFases({fasesEquipos, onUpdate}){
   const [local,setLocal]=useState({...fasesEquipos});
