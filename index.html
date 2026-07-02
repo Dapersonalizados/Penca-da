@@ -727,11 +727,11 @@ function Tabla({resultados,campeonReal}){
       setLoading(true);
       const u=await fbGet("usuarios");
       const p=await fbGet("predicciones");
-      const pe=await fbGet("predicciones_eli");
+
       const c=await fbGet("campeones");
       if(u) setUsuarios(Object.values(u));
       if(p) setFbPreds(p);
-      if(pe) setFbPredsEli(pe);
+
       if(c) setFbCampeones(c);
       setLoading(false);
     })();
@@ -867,7 +867,7 @@ function FasesEliminatorias({usuario, empresa, resultados: resultadosInicial, fa
   const guardar=async()=>{
     save(key,preds);
     const fbKey=(usuario+"__"+(empresa||"")).replace(/[.#$\[\]/]/g,"_");
-    await fbUpdate(`predicciones_eli/${fbKey}`, preds);
+    await fbUpdate(`predicciones/${fbKey}`, preds);
     onSave();
     setSaved(true); setTimeout(()=>setSaved(false),2500);
   };
@@ -1641,7 +1641,7 @@ function PencaApp(){
 function VerPredicciones({resultados}){
   const [usuarios,setUsuarios]=useState([]);
   const [fbPreds,setFbPreds]=useState({});
-  const [fbPredsEli,setFbPredsEli]=useState({});
+
   const [fbCampeones,setFbCampeones]=useState({});
   const [seleccionado,setSeleccionado]=useState(null);
   const [loading,setLoading]=useState(true);
@@ -1651,11 +1651,11 @@ function VerPredicciones({resultados}){
       setLoading(true);
       const u=await fbGet("usuarios");
       const p=await fbGet("predicciones");
-      const pe=await fbGet("predicciones_eli");
+
       const c=await fbGet("campeones");
       if(u) setUsuarios(Object.values(u));
       if(p) setFbPreds(p);
-      if(pe) setFbPredsEli(pe);
+
       if(c) setFbCampeones(c);
       setLoading(false);
     })();
@@ -1671,9 +1671,7 @@ function VerPredicciones({resultados}){
 
   const usuario = seleccionado ? usuarios.find(u=>getFbKey(u)===seleccionado) : null;
   // Combinar predicciones de grupos y eliminatorias (se guardan juntas en Firebase)
-  const predsRaw = seleccionado ? (fbPreds[seleccionado]||{}) : {};
-  const predsEli = seleccionado ? (fbPredsEli[seleccionado]||{}) : {};
-  const preds = {...predsRaw, ...predsEli};
+  const preds = seleccionado ? (fbPreds[seleccionado]||{}) : {};
   const campeon = seleccionado ? (fbCampeones[seleccionado]||"") : "";
 
   return(
