@@ -845,10 +845,20 @@ function Tabla({resultados,campeonReal}){
 }
 
 // ── FASES ELIMINATORIAS (vista usuario) ───────────────────────────────────────
-function FasesEliminatorias({usuario, empresa, resultados, fasesEquipos, onSave}){
+function FasesEliminatorias({usuario, empresa, resultados: resultadosInicial, fasesEquipos, onSave}){
   const key=`da_pred_eli_${usuario}`;
   const [preds,setPreds]=useState(()=>load(key,{}));
   const [saved,setSaved]=useState(false);
+  const [resultados,setResultados]=useState(resultadosInicial||{});
+
+  // Recargar resultados frescos desde Firebase al entrar a esta pestaña
+  useEffect(()=>{
+    (async()=>{
+      const r = await fbGet("resultados");
+      if(r) setResultados(r);
+      else setResultados(resultadosInicial||{});
+    })();
+  },[]);
 
   const set=(id,side,val)=>setPreds(p=>({...p,[id]:{...p[id],[side]:val}}));
 
@@ -1587,7 +1597,7 @@ function PencaApp(){
             <Tabla key={tabKey} resultados={resultados} campeonReal={campeonReal}/>
           )}
           {tab==="eliminatorias"&&(
-            <FasesEliminatorias usuario={usuario} resultados={resultados}
+            <FasesEliminatorias usuario={usuario} empresa={empresa} resultados={resultados}
               fasesEquipos={fasesEquipos} onSave={()=>setTabKey(k=>k+1)}/>
           )}
           {tab==="verpreds"&&<VerPredicciones resultados={resultados}/>}
