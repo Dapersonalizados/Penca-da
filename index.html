@@ -286,8 +286,18 @@ async function sincronizarResultadosAuto(){
 function encontrarPartidoId(local, visitante){
   const lEs = traducirEquipo(local);
   const vEs = traducirEquipo(visitante);
+  // Buscar en grupos
   for(const g of GRUPOS){
     for(const p of g.partidos){
+      if((p.local===lEs && p.visitante===vEs) || (p.local===vEs && p.visitante===lEs)){
+        return {id:p.id, invertido: p.local===vEs};
+      }
+    }
+  }
+  // Buscar en fases eliminatorias (16avos tienen equipos fijos)
+  for(const fase of FASES_ELIMINATORIAS){
+    for(const p of fase.partidos){
+      if(!p.local || !p.visitante) continue;
       if((p.local===lEs && p.visitante===vEs) || (p.local===vEs && p.visitante===lEs)){
         return {id:p.id, invertido: p.local===vEs};
       }
