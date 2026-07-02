@@ -932,21 +932,43 @@ function FasesEliminatorias({usuario, empresa, resultados: resultadosInicial, fa
                   <span style={{flex:1,textAlign:"right",fontSize:13,fontWeight:600,color:"#fff"}}>
                     {FLAGS[eq.local]||"🏳️"} {eq.local||"?"}
                   </span>
-                  <input type="number" min="0" max="20" value={pred.local}
-                    onChange={e=>set(p.id,"local",e.target.value)} disabled={locked}
-                    style={{width:44,textAlign:"center",fontSize:20,fontWeight:800,
-                      background:locked?"rgba(255,255,255,0.03)":"rgba(42,191,191,0.1)",
-                      border:`2px solid ${locked?"rgba(255,255,255,0.1)":DA_TEAL+"66"}`,
-                      borderRadius:8,color:locked?"rgba(255,255,255,0.3)":"#fff",
-                      padding:"6px 2px",outline:"none"}}/>
-                  <span style={{color:"rgba(255,255,255,0.2)",fontSize:12}}>—</span>
-                  <input type="number" min="0" max="20" value={pred.visitante}
-                    onChange={e=>set(p.id,"visitante",e.target.value)} disabled={locked}
-                    style={{width:44,textAlign:"center",fontSize:20,fontWeight:800,
-                      background:locked?"rgba(255,255,255,0.03)":"rgba(42,191,191,0.1)",
-                      border:`2px solid ${locked?"rgba(255,255,255,0.1)":DA_TEAL+"66"}`,
-                      borderRadius:8,color:locked?"rgba(255,255,255,0.3)":"#fff",
-                      padding:"6px 2px",outline:"none"}}/>
+                  {locked ? (
+                    <>
+                      <span style={{width:44,textAlign:"center",fontSize:20,fontWeight:800,
+                        background:"rgba(255,255,255,0.06)",
+                        border:"2px solid rgba(255,255,255,0.1)",
+                        borderRadius:8,color:"rgba(255,255,255,0.5)",
+                        padding:"6px 2px",display:"inline-block"}}>
+                        {real?.local??"-"}
+                      </span>
+                      <span style={{color:"rgba(255,255,255,0.2)",fontSize:12}}>—</span>
+                      <span style={{width:44,textAlign:"center",fontSize:20,fontWeight:800,
+                        background:"rgba(255,255,255,0.06)",
+                        border:"2px solid rgba(255,255,255,0.1)",
+                        borderRadius:8,color:"rgba(255,255,255,0.5)",
+                        padding:"6px 2px",display:"inline-block"}}>
+                        {real?.visitante??"-"}
+                      </span>
+                    </>
+                  ) : (
+                    <>
+                      <input type="number" min="0" max="20" value={pred.local}
+                        onChange={e=>set(p.id,"local",e.target.value)}
+                        style={{width:44,textAlign:"center",fontSize:20,fontWeight:800,
+                          background:"rgba(42,191,191,0.1)",
+                          border:`2px solid ${DA_TEAL+"66"}`,
+                          borderRadius:8,color:"#fff",
+                          padding:"6px 2px",outline:"none"}}/>
+                      <span style={{color:"rgba(255,255,255,0.2)",fontSize:12}}>—</span>
+                      <input type="number" min="0" max="20" value={pred.visitante}
+                        onChange={e=>set(p.id,"visitante",e.target.value)}
+                        style={{width:44,textAlign:"center",fontSize:20,fontWeight:800,
+                          background:"rgba(42,191,191,0.1)",
+                          border:`2px solid ${DA_TEAL+"66"}`,
+                          borderRadius:8,color:"#fff",
+                          padding:"6px 2px",outline:"none"}}/>
+                    </>
+                  )}
                   <span style={{flex:1,fontSize:13,fontWeight:600,color:"#fff"}}>
                     {FLAGS[eq.visitante]||"🏳️"} {eq.visitante||"?"}
                   </span>
