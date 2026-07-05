@@ -1442,6 +1442,42 @@ function Admin({resultados,campeonReal,onUpdate,onCampeon}){
         })}
       </div>
 
+      {/* Octavos, Cuartos, Semis, Final */}
+      {FASES_ELIMINATORIAS.slice(1).map(fase=>(
+        <div key={fase.id} style={{marginTop:8,marginBottom:22}}>
+          <div style={{fontFamily:"'Barlow Condensed',sans-serif",fontWeight:700,
+            fontSize:18,color:DA_TEAL,marginBottom:9,letterSpacing:2}}>
+            {fase.label.toUpperCase()}
+          </div>
+          {fase.partidos.map(p=>{
+            const cur=local[p.id]||resultados[p.id]||{local:"",visitante:""};
+            const rl=resultados[p.id]?.local;
+            const rv=resultados[p.id]?.visitante;
+            const ok=(rl!==undefined&&rl!==""&&rv!==undefined&&rv!=="");
+            const localNombre=p.local||"?";
+            const visitanteNombre=p.visitante||"?";
+            return(
+              <div key={p.id} style={{
+                display:"flex",alignItems:"center",gap:8,
+                background:DA_CARD,borderRadius:10,padding:"9px 12px",marginBottom:5,
+                border:ok?`1px solid #00C89633`:`1px solid rgba(255,255,255,0.06)`}}>
+                <span style={{flex:1,textAlign:"right",fontSize:12,color:p.local?"#fff":"rgba(255,255,255,0.3)"}}>
+                  {FLAGS[localNombre]||""} {localNombre}
+                </span>
+                <NumInput value={cur.local} onChange={v=>setScore(p.id,"local",v)}/>
+                <span style={{color:"rgba(255,255,255,0.2)"}}>—</span>
+                <NumInput value={cur.visitante} onChange={v=>setScore(p.id,"visitante",v)}/>
+                <span style={{flex:1,fontSize:12,color:p.visitante?"#fff":"rgba(255,255,255,0.3)"}}>
+                  {FLAGS[visitanteNombre]||""} {visitanteNombre}
+                </span>
+                <span style={{fontSize:10,color:"rgba(255,255,255,0.25)",minWidth:28}}>{p.fecha}</span>
+                {ok&&<span style={{color:"#00C896",fontSize:12}}>✓</span>}
+              </div>
+            );
+          })}
+        </div>
+      ))}
+
       <div style={{textAlign:"center",marginTop:10}}>
         <button onClick={guardar}
           style={{background:"#E53E3E",color:"#fff",border:"none",
