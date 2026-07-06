@@ -875,9 +875,11 @@ function FasesEliminatorias({usuario, empresa, resultados: resultadosInicial, fa
   // Para 16avos, los equipos están fijos en FASES_ELIMINATORIAS
   // Para otras fases, vienen de fasesEquipos (cargados por admin)
   const getEquipos=(fase, partido)=>{
-    if(fase.id==="dieciseisavos"){
+    // Si el partido ya tiene equipos hardcodeados, usarlos
+    if(partido.local && partido.visitante){
       return {local: partido.local, visitante: partido.visitante};
     }
+    // Si no, buscar en fasesEquipos (cargados por admin)
     return fasesEquipos[partido.id] || {};
   };
 
@@ -902,12 +904,7 @@ function FasesEliminatorias({usuario, empresa, resultados: resultadosInicial, fa
   return(
     <div style={{maxWidth:680,margin:"0 auto",padding:"0 16px 90px"}}>
       {FASES_ELIMINATORIAS.map(fase=>{
-        const partidosVisibles = fase.partidos.filter(p=>{
-          if(fase.id==="dieciseisavos") return true;
-          const eq = fasesEquipos[p.id]||{};
-          return eq.local && eq.visitante;
-        });
-        if(partidosVisibles.length===0) return null;
+        const partidosVisibles = fase.partidos;
         return(
           <div key={fase.id} style={{marginBottom:28}}>
             <div style={{display:"flex",alignItems:"center",gap:10,
