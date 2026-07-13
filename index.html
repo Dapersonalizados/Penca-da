@@ -107,6 +107,214 @@ function encontrarPartidoId(local, visitante){
   return null;
 }
 
+const FASES_ELIMINATORIAS = [
+  {
+    id: "dieciseisavos", label: "16avos de Final",
+    partidos: [
+      {id:"R01", local:"Sudáfrica",       visitante:"Canadá",         fecha:"28 Jun"},
+      {id:"R02", local:"Alemania",        visitante:"Paraguay",       fecha:"29 Jun"},
+      {id:"R03", local:"Países Bajos",    visitante:"Marruecos",      fecha:"29 Jun"},
+      {id:"R04", local:"Brasil",          visitante:"Japón",          fecha:"29 Jun"},
+      {id:"R05", local:"Francia",         visitante:"Suecia",         fecha:"30 Jun"},
+      {id:"R06", local:"Costa de Marfil", visitante:"Noruega",        fecha:"30 Jun"},
+      {id:"R07", local:"México",          visitante:"Ecuador",        fecha:"30 Jun"},
+      {id:"R08", local:"Inglaterra",      visitante:"RD Congo",       fecha:"1 Jul"},
+      {id:"R09", local:"Bélgica",         visitante:"Senegal",        fecha:"1 Jul"},
+      {id:"R10", local:"Estados Unidos",  visitante:"Bosnia y Herz.", fecha:"1 Jul"},
+      {id:"R11", local:"España",          visitante:"Austria",        fecha:"2 Jul"},
+      {id:"R12", local:"Portugal",        visitante:"Croacia",        fecha:"2 Jul"},
+      {id:"R13", local:"Suiza",           visitante:"Argelia",        fecha:"2 Jul"},
+      {id:"R14", local:"Argentina",       visitante:"Cabo Verde",     fecha:"3 Jul"},
+      {id:"R15", local:"Australia",       visitante:"Egipto",         fecha:"3 Jul"},
+      {id:"R16", local:"Colombia",        visitante:"Ghana",          fecha:"3 Jul"},
+    ]
+  },
+  {
+    id: "octavos", label: "Octavos de Final",
+    partidos: [
+      {id:"O1", local:"Canadá",         visitante:"Marruecos",    fecha:"4 Jul"},
+      {id:"O2", local:"Paraguay",       visitante:"Francia",      fecha:"4 Jul"},
+      {id:"O3", local:"Brasil",         visitante:"Noruega",      fecha:"5 Jul"},
+      {id:"O4", local:"México",         visitante:"Inglaterra",   fecha:"5 Jul"},
+      {id:"O5", local:"Portugal",       visitante:"España",       fecha:"6 Jul"},
+      {id:"O6", local:"Estados Unidos", visitante:"Bélgica",      fecha:"6 Jul"},
+      {id:"O7", local:"Argentina",      visitante:"Egipto",       fecha:"7 Jul"},
+      {id:"O8", local:"Suiza",          visitante:"Colombia",     fecha:"7 Jul"},
+    ]
+  },
+  {
+    id: "cuartos", label: "Cuartos de Final",
+    partidos: [
+      {id:"Q1", local:"Francia",   visitante:"Marruecos",  fecha:"9 Jul"},
+      {id:"Q2", local:"España",    visitante:"Bélgica",    fecha:"10 Jul"},
+      {id:"Q3", local:"Noruega",   visitante:"Inglaterra", fecha:"11 Jul"},
+      {id:"Q4", local:"Argentina", visitante:"Suiza",      fecha:"11 Jul"},
+    ]
+  },
+  {
+    id: "semis", label: "Semifinales",
+    partidos: [
+      {id:"S1", local:"Francia",    visitante:"España",    fecha:"14 Jul"},
+      {id:"S2", local:"Inglaterra", visitante:"Argentina", fecha:"15 Jul"},
+    ]
+  },
+  {
+    id: "final", label: "Final y 3° Puesto",
+    partidos: [
+      {id:"F3", local:"", visitante:"", label:"Tercer Puesto", fecha:"18 Jul"},
+      {id:"F1", local:"", visitante:"", label:"Final",         fecha:"19 Jul"},
+    ]
+  },
+];\n\nconst EQUIPOS_TODOS = [
+  "México","Sudáfrica","Corea del Sur","Rep. Checa",
+  "Canadá","Bosnia y Herz.","Qatar","Suiza",
+  "Brasil","Marruecos","Haití","Escocia",
+  "Estados Unidos","Paraguay","Australia","Turquía",
+  "Alemania","Curazao","Costa de Marfil","Ecuador",
+  "Países Bajos","Japón","Suecia","Túnez",
+  "Bélgica","Egipto","Irán","Nueva Zelanda",
+  "España","Cabo Verde","Arabia Saudita","Uruguay",
+  "Francia","Senegal","Irak","Noruega",
+  "Argentina","Argelia","Austria","Jordania",
+  "Portugal","RD Congo","Uzbekistán","Colombia",
+  "Inglaterra","Croacia","Ghana","Panamá",
+];
+
+const GRUPOS = [
+  {
+    id:"A", equipos:["México","Sudáfrica","Corea del Sur","Rep. Checa"],
+    partidos:[
+      {id:"A1",local:"México",visitante:"Sudáfrica",fecha:"11 Jun"},
+      {id:"A2",local:"Corea del Sur",visitante:"Rep. Checa",fecha:"11 Jun"},
+      {id:"A3",local:"México",visitante:"Corea del Sur",fecha:"15 Jun"},
+      {id:"A4",local:"Sudáfrica",visitante:"Rep. Checa",fecha:"15 Jun"},
+      {id:"A5",local:"México",visitante:"Rep. Checa",fecha:"19 Jun"},
+      {id:"A6",local:"Sudáfrica",visitante:"Corea del Sur",fecha:"19 Jun"},
+    ],
+  },
+  {
+    id:"B", equipos:["Canadá","Bosnia y Herz.","Qatar","Suiza"],
+    partidos:[
+      {id:"B1",local:"Canadá",visitante:"Bosnia y Herz.",fecha:"12 Jun"},
+      {id:"B2",local:"Qatar",visitante:"Suiza",fecha:"13 Jun"},
+      {id:"B3",local:"Canadá",visitante:"Qatar",fecha:"17 Jun"},
+      {id:"B4",local:"Suiza",visitante:"Bosnia y Herz.",fecha:"17 Jun"},
+      {id:"B5",local:"Canadá",visitante:"Suiza",fecha:"21 Jun"},
+      {id:"B6",local:"Qatar",visitante:"Bosnia y Herz.",fecha:"21 Jun"},
+    ],
+  },
+  {
+    id:"C", equipos:["Brasil","Marruecos","Haití","Escocia"],
+    partidos:[
+      {id:"C1",local:"Brasil",visitante:"Marruecos",fecha:"13 Jun"},
+      {id:"C2",local:"Haití",visitante:"Escocia",fecha:"13 Jun"},
+      {id:"C3",local:"Brasil",visitante:"Haití",fecha:"17 Jun"},
+      {id:"C4",local:"Marruecos",visitante:"Escocia",fecha:"17 Jun"},
+      {id:"C5",local:"Brasil",visitante:"Escocia",fecha:"21 Jun"},
+      {id:"C6",local:"Marruecos",visitante:"Haití",fecha:"21 Jun"},
+    ],
+  },
+  {
+    id:"D", equipos:["Estados Unidos","Paraguay","Australia","Turquía"],
+    partidos:[
+      {id:"D1",local:"Estados Unidos",visitante:"Paraguay",fecha:"12 Jun"},
+      {id:"D2",local:"Australia",visitante:"Turquía",fecha:"14 Jun"},
+      {id:"D3",local:"Estados Unidos",visitante:"Australia",fecha:"18 Jun"},
+      {id:"D4",local:"Paraguay",visitante:"Turquía",fecha:"18 Jun"},
+      {id:"D5",local:"Estados Unidos",visitante:"Turquía",fecha:"22 Jun"},
+      {id:"D6",local:"Paraguay",visitante:"Australia",fecha:"22 Jun"},
+    ],
+  },
+  {
+    id:"E", equipos:["Alemania","Curazao","Costa de Marfil","Ecuador"],
+    partidos:[
+      {id:"E1",local:"Alemania",visitante:"Curazao",fecha:"14 Jun"},
+      {id:"E2",local:"Costa de Marfil",visitante:"Ecuador",fecha:"14 Jun"},
+      {id:"E3",local:"Alemania",visitante:"Costa de Marfil",fecha:"18 Jun"},
+      {id:"E4",local:"Curazao",visitante:"Ecuador",fecha:"18 Jun"},
+      {id:"E5",local:"Alemania",visitante:"Ecuador",fecha:"22 Jun"},
+      {id:"E6",local:"Curazao",visitante:"Costa de Marfil",fecha:"22 Jun"},
+    ],
+  },
+  {
+    id:"F", equipos:["Países Bajos","Japón","Suecia","Túnez"],
+    partidos:[
+      {id:"F1",local:"Países Bajos",visitante:"Japón",fecha:"15 Jun"},
+      {id:"F2",local:"Suecia",visitante:"Túnez",fecha:"15 Jun"},
+      {id:"F3",local:"Países Bajos",visitante:"Suecia",fecha:"19 Jun"},
+      {id:"F4",local:"Japón",visitante:"Túnez",fecha:"19 Jun"},
+      {id:"F5",local:"Países Bajos",visitante:"Túnez",fecha:"23 Jun"},
+      {id:"F6",local:"Japón",visitante:"Suecia",fecha:"23 Jun"},
+    ],
+  },
+  {
+    id:"G", equipos:["Bélgica","Egipto","Irán","Nueva Zelanda"],
+    partidos:[
+      {id:"G1",local:"Bélgica",visitante:"Egipto",fecha:"15 Jun"},
+      {id:"G2",local:"Irán",visitante:"Nueva Zelanda",fecha:"15 Jun"},
+      {id:"G3",local:"Bélgica",visitante:"Irán",fecha:"19 Jun"},
+      {id:"G4",local:"Egipto",visitante:"Nueva Zelanda",fecha:"19 Jun"},
+      {id:"G5",local:"Bélgica",visitante:"Nueva Zelanda",fecha:"23 Jun"},
+      {id:"G6",local:"Egipto",visitante:"Irán",fecha:"23 Jun"},
+    ],
+  },
+  {
+    id:"H", equipos:["España","Cabo Verde","Arabia Saudita","Uruguay"],
+    partidos:[
+      {id:"H1",local:"España",visitante:"Cabo Verde",fecha:"16 Jun"},
+      {id:"H2",local:"Arabia Saudita",visitante:"Uruguay",fecha:"16 Jun"},
+      {id:"H3",local:"España",visitante:"Arabia Saudita",fecha:"20 Jun"},
+      {id:"H4",local:"Cabo Verde",visitante:"Uruguay",fecha:"20 Jun"},
+      {id:"H5",local:"España",visitante:"Uruguay",fecha:"24 Jun"},
+      {id:"H6",local:"Cabo Verde",visitante:"Arabia Saudita",fecha:"24 Jun"},
+    ],
+  },
+  {
+    id:"I", equipos:["Francia","Senegal","Irak","Noruega"],
+    partidos:[
+      {id:"I1",local:"Francia",visitante:"Senegal",fecha:"16 Jun"},
+      {id:"I2",local:"Irak",visitante:"Noruega",fecha:"16 Jun"},
+      {id:"I3",local:"Francia",visitante:"Irak",fecha:"20 Jun"},
+      {id:"I4",local:"Senegal",visitante:"Noruega",fecha:"20 Jun"},
+      {id:"I5",local:"Francia",visitante:"Noruega",fecha:"24 Jun"},
+      {id:"I6",local:"Senegal",visitante:"Irak",fecha:"24 Jun"},
+    ],
+  },
+  {
+    id:"J", equipos:["Argentina","Argelia","Austria","Jordania"],
+    partidos:[
+      {id:"J1",local:"Argentina",visitante:"Argelia",fecha:"17 Jun"},
+      {id:"J2",local:"Austria",visitante:"Jordania",fecha:"17 Jun"},
+      {id:"J3",local:"Argentina",visitante:"Austria",fecha:"21 Jun"},
+      {id:"J4",local:"Argelia",visitante:"Jordania",fecha:"21 Jun"},
+      {id:"J5",local:"Argentina",visitante:"Jordania",fecha:"25 Jun"},
+      {id:"J6",local:"Argelia",visitante:"Austria",fecha:"25 Jun"},
+    ],
+  },
+  {
+    id:"K", equipos:["Portugal","RD Congo","Uzbekistán","Colombia"],
+    partidos:[
+      {id:"K1",local:"Portugal",visitante:"RD Congo",fecha:"17 Jun"},
+      {id:"K2",local:"Uzbekistán",visitante:"Colombia",fecha:"17 Jun"},
+      {id:"K3",local:"Portugal",visitante:"Uzbekistán",fecha:"21 Jun"},
+      {id:"K4",local:"RD Congo",visitante:"Colombia",fecha:"21 Jun"},
+      {id:"K5",local:"Portugal",visitante:"Colombia",fecha:"25 Jun"},
+      {id:"K6",local:"RD Congo",visitante:"Uzbekistán",fecha:"25 Jun"},
+    ],
+  },
+  {
+    id:"L", equipos:["Inglaterra","Croacia","Ghana","Panamá"],
+    partidos:[
+      {id:"L1",local:"Inglaterra",visitante:"Croacia",fecha:"18 Jun"},
+      {id:"L2",local:"Ghana",visitante:"Panamá",fecha:"18 Jun"},
+      {id:"L3",local:"Inglaterra",visitante:"Ghana",fecha:"22 Jun"},
+      {id:"L4",local:"Croacia",visitante:"Panamá",fecha:"22 Jun"},
+      {id:"L5",local:"Inglaterra",visitante:"Panamá",fecha:"26 Jun"},
+      {id:"L6",local:"Croacia",visitante:"Ghana",fecha:"26 Jun"},
+    ],
+  },
+];
+
 const FLAGS = {
   "México":"🇲🇽","Sudáfrica":"🇿🇦","Corea del Sur":"🇰🇷","Rep. Checa":"🇨🇿",
   "Canadá":"🇨🇦","Bosnia y Herz.":"🇧🇦","Qatar":"🇶🇦","Suiza":"🇨🇭",
